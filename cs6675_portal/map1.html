@@ -1,0 +1,262 @@
+
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <title>AnimatedCluster Strategy Test</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+        <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Tangerine&amp;v1" />
+        <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Yanone+Kaffeesatz" />
+
+		<script src="./public/js/jquery.min.js"></script>
+        <script src="./public/js/OpenLayers.js"></script>
+        <script src="./public/js/AnimatedCluster.js"></script>
+
+        <style>
+			html, body{
+				width:100%;
+				height:100%;
+			}
+            #header {
+                height: 100px;
+            }
+            #content {
+                width: 100%;
+                padding-bottom: 25px;
+                font-size: 14px;
+            }
+            .map {
+                -webkit-box-shadow:  5px 5px 5px 0px rgba(0, 0, 0, 0.5);
+                box-shadow:  5px 5px 5px 0px rgba(0, 0, 0, 0.5);
+                -webkit-border-radius: 7px;
+                border-radius: 7px;
+				margin:0 auto;
+                width: 90%;
+                height: 650px;
+                margin-bottom: 20px;
+            }
+            #map1, #map2 {
+                width: 100%;
+                height: 100%;
+            }
+        </style>
+    </head>
+
+    <body>
+        <div id="main">
+            <div id="site_content">
+                <div id="content">
+                    <div class="map">
+                        <div id="map1"></div>
+                    </div>
+					<div id="photos"></div>
+                </div>
+            </div>
+        </div>
+
+        <script type="text/javascript">
+			var longitude = 116, latitude = 40;			
+			/*if(navigator.geolocation) {
+				navigator.geolocation.getCurrentPosition( function(position) {
+					latitude = position.coords.latitude; 
+					longitude = position.coords.longitude;
+				});
+			}*/
+
+			var query = window.top.location.search;
+			var DATA_TOKEN = "data=";
+			var data = -1;
+
+			if (query.indexOf(DATA_TOKEN) >= 0) {
+				query = query.split(DATA_TOKEN);
+				data = query[1];
+			}
+
+            // Create a map and add OSM raster layer as the base layer
+            var map1 = new OpenLayers.Map("map1");
+            var osm1 = new OpenLayers.Layer.OSM();
+            map1.addLayer(osm1);
+            
+            // Initial view location
+            var center = new OpenLayers.LonLat(longitude, latitude);
+            center.transform(new OpenLayers.Projection("EPSG:4326"), new OpenLayers.Projection("EPSG:900913"));
+            map1.setCenter(center, 4);
+            // Add a LayerSwitcher control
+            map1.addControl(new OpenLayers.Control.LayerSwitcher());
+            
+            // Define three colors that will be used to style the cluster features
+            // depending on the number of features they contain.
+            var colors = {
+                low: "rgb(181, 226, 140)", 
+                middle: "rgb(241, 211, 87)", 
+                high: "rgb(253, 156, 115)"
+            };
+            
+            // Define three rules to style the cluster features.
+            var lowRule = new OpenLayers.Rule({
+                filter: new OpenLayers.Filter.Comparison({
+                    type: OpenLayers.Filter.Comparison.LESS_THAN,
+                    property: "count",
+                    value: 15
+                }),
+                symbolizer: {
+                    fillColor: colors.low,
+                    fillOpacity: 0.9, 
+                    strokeColor: colors.low,
+                    strokeOpacity: 0.5,
+                    strokeWidth: 12,
+                    pointRadius: 10,
+                    label: "${count}",
+                    labelOutlineWidth: 1,
+                    fontColor: "#ffffff",
+                    fontOpacity: 0.8,
+                    fontSize: "12px"
+                }
+            });
+            var middleRule = new OpenLayers.Rule({
+                filter: new OpenLayers.Filter.Comparison({
+                    type: OpenLayers.Filter.Comparison.BETWEEN,
+                    property: "count",
+                    lowerBoundary: 15,
+                    upperBoundary: 50
+                }),
+                symbolizer: {
+                    fillColor: colors.middle,
+                    fillOpacity: 0.9, 
+                    strokeColor: colors.middle,
+                    strokeOpacity: 0.5,
+                    strokeWidth: 12,
+                    pointRadius: 15,
+                    label: "${count}",
+                    labelOutlineWidth: 1,
+                    fontColor: "#ffffff",
+                    fontOpacity: 0.8,
+                    fontSize: "12px"
+                }
+            });
+            var highRule = new OpenLayers.Rule({
+                filter: new OpenLayers.Filter.Comparison({
+                    type: OpenLayers.Filter.Comparison.GREATER_THAN,
+                    property: "count",
+                    value: 50
+                }),
+                symbolizer: {
+                    fillColor: colors.high,
+                    fillOpacity: 0.9, 
+                    strokeColor: colors.high,
+                    strokeOpacity: 0.5,
+                    strokeWidth: 12,
+                    pointRadius: 20,
+                    label: "${count}",
+                    labelOutlineWidth: 1,
+                    fontColor: "#ffffff",
+                    fontOpacity: 0.8,
+                    fontSize: "12px"
+                }
+            });
+            
+            // Create a Style that uses the three previous rules
+            var style = new OpenLayers.Style(
+			{	context: {
+					name: function(feature) {
+						if(feature.cluster) {
+							// Last airport is always the largest
+							last = feature.cluster.length - 1;
+						}
+						feature.attributes.name = "test";
+						return feature.attributes.name;
+					}
+				}
+			}, {
+                rules: [lowRule, middleRule, highRule]
+            });            
+
+            // Create a vector layers
+            var vector1 = new OpenLayers.Layer.Vector("Features", {
+                protocol: new OpenLayers.Protocol.HTTP({
+                    url: "/getAllPostsForMap?data=" + data,
+                    format: new OpenLayers.Format.GeoJSON()
+                }),
+                renderers: ['Canvas','SVG'],
+                strategies: [
+                    new OpenLayers.Strategy.Fixed(),
+                    new OpenLayers.Strategy.AnimatedCluster({
+                        distance: 60,
+						threshold: 2,
+                        animationMethod: OpenLayers.Easing.Expo.easeOut,
+                        animationDuration: 10
+                    })
+                ],
+                styleMap:  new OpenLayers.StyleMap({
+					"default": style,
+					"select": {
+						fillColor: "#8aeeef",
+						strokeColor: "32a8a9"
+					}
+				}),
+				eventListeners:{
+					'featureselected': function(event){
+						var feature = event.feature;
+						var cluster = event.feature.cluster;
+						var request = "";
+						for(var i = 0; i < cluster.length; i++) {
+							var data = cluster[i].attributes;
+							request += '{"text" : "' + data.text + '"}\n';
+						}
+						$.ajax({
+							type: "POST",
+							url: 'http://localhost:3000/getTerms', 
+							data: request,
+							success: function(data) {
+								var popup = new OpenLayers.Popup.FramedCloud(/*id*/"popup",
+									/*lonlat*/OpenLayers.LonLat.fromString(feature.geometry.toShortString()),
+									/*size*/null,
+									/*contentHTML*/'<div style="color:blue">We have ' + feature.cluster.length + ' weibos here!</div>' + data,
+									/*anchor*/null,
+									/*closeBox*/true,
+									/*closeBoxCallBack*/null
+								);
+								popup.autoSize = true;
+								popup.maxSize = new OpenLayers.Size(400,800);
+								popup.fixedRelativePosition = true;
+								feature.popup = popup;
+								map1.addPopup(popup);
+							}, 
+							dataType: 'text',
+							async: false
+						});
+/*
+						alert(request);
+						var outputFile = "data/weibos.txt";
+						fs.writeFile(outputFile, request, function(err){
+							if(err){
+								console.log(err);
+							}else{
+								console.log("weibos for one cluster is saved to " + outputFile);
+							}
+						});
+*/
+					},
+					'featureunselected':function(event){
+						var feature = event.feature;
+						map1.removePopup(feature.popup);
+						feature.popup.destroy();
+						feature.popup = null;
+					}, 
+					'featuresadded': function(event) {
+						console.log("hello");
+					}
+
+				}
+            });
+            map1.addLayer(vector1);
+
+			var selector = new OpenLayers.Control.SelectFeature(vector1, {
+				hover:true,
+				autoActivate:true
+			});
+			map1.addControl(selector);
+        </script>
+    </body>
+</html>
+

@@ -1,0 +1,16 @@
+14759 DEBUG [2014-03-30 12:28:24]  Request:
+14759 DEBUG [2014-03-30 12:28:24]  GET:https://api.weibo.com/2/statuses/public_timeline.json
+14760 DEBUG [2014-03-30 12:28:24]  Authorization: OAuth2 2.00aPsHYFZSUU9D9647069694uRXXfC
+14760 DEBUG [2014-03-30 12:28:24]  API-RemoteIP: 192.168.1.103
+18030 DEBUG [2014-03-30 12:28:27]  Response:
+18030 DEBUG [2014-03-30 12:28:27]  https StatusCode:200
+18030 DEBUG [2014-03-30 12:28:27]  Server:nginx/1.2.0
+18030 DEBUG [2014-03-30 12:28:27]  Date:Sun, 30 Mar 2014 16:28:27 GMT
+18030 DEBUG [2014-03-30 12:28:27]  Content-Type:application/json;charset=UTF-8
+18030 DEBUG [2014-03-30 12:28:27]  Transfer-Encoding:chunked
+18030 DEBUG [2014-03-30 12:28:27]  Connection:keep-alive
+18030 DEBUG [2014-03-30 12:28:27]  Api-Server-IP:10.75.0.175
+18030 DEBUG [2014-03-30 12:28:27]  Vary:Accept-Encoding
+18030 WARN  [2014-03-30 12:28:27]  Going to buffer response body of large or unknown size. Using getResponseBodyAsStream instead is recommended.
+18030 DEBUG [2014-03-30 12:28:27]  {"statuses":[],"hasvisible":false,"previous_cursor":0,"next_cursor":0,"total_number":200}
+

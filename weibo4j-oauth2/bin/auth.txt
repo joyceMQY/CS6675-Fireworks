@@ -1,0 +1,4 @@
+https://api.weibo.com/oauth2/authorize?client_id=3169402215&response_type=code&redirect_uri=http://zheng-lin.appspot.com/unit2/signup
+
+
+https://api.weibo.com/oauth2/access_token?client_id=3169402215&client_secret=5472223bdf902910d12fd35d11207e0e&grant_type=authorization_code&redirect_uri=http://zheng-lin.appspot.com/unit2/signup/&code=369652bb751b318a3fa3b4e3002bee18
